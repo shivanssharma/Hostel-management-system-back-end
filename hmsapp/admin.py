@@ -92,4 +92,5 @@ admin.site.register(NecessityStoreItem),
 admin.site.register(Hospital),
 admin.site.register(HealthRecord),
 admin.site.register(Department),
-
+admin.site.register(Reservation),
+admin.site.register(HospitalVisit),
