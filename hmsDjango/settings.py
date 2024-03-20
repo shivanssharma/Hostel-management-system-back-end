@@ -136,3 +136,4 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # AUTH_USER_MODEL="hmsapp.User"
 # USERNAME_FIELD = 'userName'
+APPEND_SLASH = False

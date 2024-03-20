@@ -1,6 +1,6 @@
 from rest_framework import serializers 
 from hmsapp.models import Room,Ailment,Medicine,NecessityStoreItem,Student,HostelAsset,Hospital,Department,HospitalVisit
- 
+from django.contrib.auth.models import User
  
 # class UserRegistrationSerializer(serializers.ModelSerializer):
 #     email = serializers.EmailField(required=True)  # Add the email field
@@ -27,11 +27,15 @@ from hmsapp.models import Room,Ailment,Medicine,NecessityStoreItem,Student,Hoste
 #     username = serializers.CharField()
 #     password = serializers.CharField(style={'input_type': 'password'})
 
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['is_superuser', 'is_active']
+
 class StudentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Student
         fields = '__all__'
-
 
 class RoomSerializer(serializers.ModelSerializer):
     #student = StudentSerializer(many=True,read_only=True)

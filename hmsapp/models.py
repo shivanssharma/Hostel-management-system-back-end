@@ -89,22 +89,22 @@ class Student(models.Model):
     FirstName = models.CharField(max_length=100)
     LastName = models.CharField(max_length=100)
     CourseName = models.CharField(max_length=100)
-    DateOfJoining = models.DateTimeField()
+    DateOfJoining = models.DateField()
     FatherName = models.CharField(max_length=100)
     MotherName = models.CharField(max_length=100)
-    DateOfBirth = models.DateTimeField()
-    EmailID = models.CharField(max_length=100)
+    DateOfBirth = models.DateField()
+    EmailID = models.EmailField(max_length=100)
     Address = models.CharField(max_length=100)
-    
-
+    is_Room=models.BooleanField(default=False)
+    MobileNumber=models.IntegerField()
 
 
 class Room(models.Model):
     RoomID = models.AutoField(primary_key=True)
-    RegistrationNumber = models.ForeignKey(Student, on_delete=models.CASCADE)
+    RegistrationNumber = models.ManyToManyField(Student)
     FloorNumber = models.CharField(max_length=100)
     RoomNumber = models.CharField(max_length=100)
-    roomLeader = models.BooleanField()
+    roomLeader = models.BooleanField(default=False)
     
 
 class Electronics(models.Model):
