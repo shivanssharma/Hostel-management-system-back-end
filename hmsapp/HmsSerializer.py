@@ -1,5 +1,5 @@
 from rest_framework import serializers 
-from hmsapp.models import Room,Ailment,Medicine,NecessityStoreItem,Student,HostelAsset,Hospital,Department,HospitalVisit
+from hmsapp.models import *
 from django.contrib.auth.models import User
  
 # class UserRegistrationSerializer(serializers.ModelSerializer):
@@ -86,3 +86,8 @@ class HospitalVisitSerializer(serializers.ModelSerializer):
     class Meta:
         model = HospitalVisit
         fields = '__all__'          
+
+class ReservationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Reservation
+        fields = '__all__'  

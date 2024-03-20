@@ -1,7 +1,7 @@
 from django.http import JsonResponse
 from rest_framework.decorators import api_view
 from rest_framework import status
-from .models import Room,Student,Ailment,Medicine,HostelAsset,NecessityStoreItem,HealthRecord # Assuming Room is the model you're working with
+from .models import Room,Student,Ailment,Medicine,HostelAsset,NecessityStoreItem,HealthRecord,Reservation # Assuming Room is the model you're working with
 import json
 from django.views.decorators.csrf import csrf_exempt
 from .HmsSerializer import *
@@ -19,6 +19,8 @@ from rest_framework.response import Response
 from django.contrib import auth 
 from django.shortcuts import get_object_or_404
 from rest_framework import permissions
+from django.utils import timezone;
+
 #-----------------------for room------------------------
 # def get_room_list(request, floor_type, room_type):
     
@@ -960,6 +962,7 @@ import json
 
 @method_decorator(csrf_exempt, name='dispatch')
 class UpdateUserStatusView(View):
+    
     def post(self, request):
         try:
             data = json.loads(request.body)
@@ -1024,9 +1027,20 @@ class HostelAssetListCreateView(generics.ListCreateAPIView):
     serializer_class = HostelAssetSerializer
 
 class HostelAssetDetail(APIView):
-    def delete(self, request, pk):
+    def get(self, request, assetName):
         try:
-            asset = get_object_or_404(HostelAsset, pk=pk)
+            asset = get_object_or_404(HostelAsset, AssetName=assetName)
+            data = {
+                'AssetName': asset.AssetName,
+                'Description': asset.Description,
+                'AvailabilityStatus': asset.AvailabilityStatus
+            }
+            return Response(data, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_404_NOT_FOUND)
+    def delete(self, request, assetName):
+        try:
+            asset = get_object_or_404(HostelAsset,AssetName=assetName)
             asset.delete()
             return JsonResponse(status=status.HTTP_204_NO_CONTENT)
         except Exception as e:
@@ -1298,6 +1312,67 @@ class SubmitElectronicView(APIView):
 
 #     # Return a JSON response indicating success
 #     return JsonResponse({'message': 'Hostel Asset deleted successfully.'})                
-class HostelAssetRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = HostelAsset.objects.all()
-    serializer_class = HostelAssetSerializer
+# class HostelAssetRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+#     queryset = HostelAsset.objects.all()
+#     serializer_class = HostelAssetSerializer
+        
+@api_view(['GET'])
+@csrf_exempt
+def asset_bookings(request):
+    try:
+        # Retrieve all reservations with related student's name and asset name
+        bookings = Reservation.objects.select_related('RegistrationNumber', 'AssetID').all()
+
+        # Prepare data to include student's name and asset name in each booking
+        bookings_data = []
+        for booking in bookings:
+            booking_data = {
+                'ReservationID': booking.ReservationID,
+                'StudentName': f"{booking.RegistrationNumber.FirstName} {booking.RegistrationNumber.LastName}",
+                'AssetName': booking.AssetID.AssetName,
+                'ReservationDate': booking.ReservationDate,
+            }
+            bookings_data.append(booking_data)
+
+        # Return the data as JSON response
+        return Response(bookings_data)
+
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)        
+    
+@api_view(['POST'])
+def book_asset(request):
+    if request.method == 'POST':
+        try:
+            # Retrieve data from the request body
+            data = request.data
+            username = data.get('username')
+            assetID = data.get('assetID')
+
+            # Retrieve the corresponding Student object and get its registration number
+            student = Student.objects.get(user__username=username)
+            registration_number = student.RegistrationNumber
+
+            # Create a serializer instance with the data
+            serializer = ReservationSerializer(data={
+                'RegistrationNumber': registration_number,
+                'AssetID': assetID,
+                'ReservationDate': timezone.now(),  # Include the reservation date
+            })
+            # Validate the serializer data
+            if serializer.is_valid():
+                # Save the serializer instance (create a new reservation)
+                serializer.save()
+                return Response({'message': 'Asset booked successfully'}, status=status.HTTP_201_CREATED)
+            else:
+                # Return validation errors
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        except Student.DoesNotExist:
+            # Handle the case where the corresponding student does not exist
+            return Response({'error': 'Student does not exist'}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            # Handle other exceptions
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    else:
+        return Response({'error': 'Invalid request method'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)    
